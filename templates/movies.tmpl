@@ -1,0 +1,71 @@
+<!doctype html>
+<html class="no-js" lang="">
+
+<head>
+  <meta charset="utf-8">
+  <title></title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- Place favicon.ico in the root directory -->
+
+  <meta name="theme-color" content="#fafafa">
+  <style>
+    table {
+        border-spacing: 2px;
+    }
+    table, th, td {
+        border: 1px solid black;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 5px;
+    }
+  </style>
+</head>
+
+<body>
+    <table>
+    <tr>
+        <th> Title </th>
+        <th> Size </th>
+        <th> Duration </th>
+        <th> Video </th>
+        <th> Audio </th>
+        <th> Subtitle </th>
+    </tr>
+    {{ range .Movies }}
+    <tr>
+        <td>{{ .Title }}</td>
+        <td>{{ .SizeText }}</td>
+        <td>{{ .DurationText }}</td>
+        <td>
+        {{ if .VideoStreams }}
+            {{ range $index, $vs := .VideoStreams }}
+            <p>{{- $index }}: {{ $vs.Codec }} {{ $vs.Width -}} x {{- $vs.Height }}</p>
+            {{ end }}
+        {{ end }}
+        </td>
+        <td>
+        {{ if .AudioStreams }}
+            {{ range $index, $as := .AudioStreams }}
+            <p>{{- $index }}: {{ $as.Codec }} {{ $as.Language }}</p>
+            {{ end }}
+        {{ end }}
+        </td>
+        <td>
+        {{ if .SubtitleStreams }}
+            {{ range $index, $ss := .SubtitleStreams }}
+            <p>{{- $index }}: {{ $ss.Codec }} {{ $ss.Languages }}</p>
+            {{ end }}
+        {{ end }}
+        </td>
+    </tr>
+    {{ end }}
+    </tbody>
+    </table>
+</body>
+
+</html>

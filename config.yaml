@@ -1,0 +1,12 @@
+filesystem:
+  mediarootdir: "./test"
+
+database:
+  uri: mongodb://localhost:27017
+  auth:
+    username: root
+    password: root
+
+server:
+  listenaddr: localhost
+  port: 8080
