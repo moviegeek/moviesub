@@ -37,10 +37,11 @@
         <th> Subtitle </th>
     </tr>
     {{ range .Movies }}
+    {{ range .VideoFiles }}
     <tr>
         <td>{{ .Title }}</td>
-        <td>{{ .SizeText }}</td>
-        <td>{{ .DurationText }}</td>
+        <td>{{ .Size }}</td>
+        <td>{{ .Duration }}</td>
         <td>
         {{ if .VideoStreams }}
             {{ range $index, $vs := .VideoStreams }}
@@ -63,6 +64,17 @@
         {{ end }}
         </td>
     </tr>
+    {{ end }}
+    {{ range .SubtitleFiles }}
+    <tr>
+        <td>{{ .Filename }}</td>
+        <td>{{ .Format }}</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+    </tr>
+    {{ end }}
     {{ end }}
     </tbody>
     </table>

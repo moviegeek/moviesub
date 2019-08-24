@@ -30,20 +30,13 @@ func Create(db *database.Database, conf *config.Config) *gin.Engine {
 	homeRoot := g.Group("")
 	{
 		homeRoot.GET("", func(ctx *gin.Context) {
-			movieFiles, err := db.AllMoviefiles()
+			movies, err := db.AllMovies()
 			if err != nil {
-				movieFiles = []*model.MovieFile{}
-			}
-
-			movieFilesExternal := []model.MovieFileExternal{}
-			for _, m := range movieFiles {
-				me := &model.MovieFileExternal{}
-				me.FromMovieFile(m)
-				movieFilesExternal = append(movieFilesExternal, *me)
+				movies = []*model.Movie{}
 			}
 
 			ctx.HTML(http.StatusOK, "movies.tmpl", gin.H{
-				"Movies": movieFilesExternal,
+				"Movies": movies,
 			})
 		})
 	}

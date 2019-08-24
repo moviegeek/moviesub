@@ -17,10 +17,20 @@ import (
 type ScanCallback func(*model.MovieFile)
 
 //ScanMediaFiles scans the root directory and find all media files
-func (fs *FileScaner) ScanMediaFiles(cb ScanCallback) {
+func (fs *FileScaner) ScanMediaFiles() []*model.Movie {
+	movies := []*model.Movie{}
+	movieMap := map[string]*model.Movie{}
+	subtitleFiles := []*model.SubtitleFile{}
+
 	err := filepath.Walk(fs.root, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
+		}
+
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			log.Printf("failed to get abs path from %s, use non-abs path. %v", path, err)
+			absPath = path
 		}
 
 		if isMediaFile(info.Name()) {
@@ -34,12 +44,6 @@ func (fs *FileScaner) ScanMediaFiles(cb ScanCallback) {
 
 			m := &model.MovieFile{}
 
-			absPath, err := filepath.Abs(path)
-			if err != nil {
-				log.Printf("failed to get abs path from %s, use non-abs path. %v", path, err)
-				absPath = ""
-			}
-
 			m.Path = absPath
 			m.Dir, m.Filename = filepath.Split(absPath)
 
@@ -47,7 +51,21 @@ func (fs *FileScaner) ScanMediaFiles(cb ScanCallback) {
 
 			convertMediaFile(mediaFile, m)
 
-			cb(m)
+			movie := &model.Movie{
+				VideoFiles: []model.MovieFile{*m},
+			}
+			movies = append(movies, movie)
+
+			movieMap[m.Dir] = movie
+		}
+
+		if isSubtitleFile(info.Name()) {
+			sub, err := probeSubtitleFile(absPath)
+			if err != nil {
+				log.Printf("failed to probe subtitle file %s, skip it: %v", absPath, err)
+				return nil
+			}
+			subtitleFiles = append(subtitleFiles, sub)
 		}
 
 		return nil
@@ -56,11 +74,36 @@ func (fs *FileScaner) ScanMediaFiles(cb ScanCallback) {
 	if err != nil {
 		log.Printf("error when scaning folder %s: %v", fs.root, err)
 	}
+
+	for _, sub := range subtitleFiles {
+		dir := sub.Dir
+		if m, ok := movieMap[dir]; ok {
+			log.Printf("adding subtitle %s to movie %s", sub.Filename, m.VideoFiles[0].Filename)
+			m.SubtitleFiles = append(m.SubtitleFiles, *sub)
+		} else {
+			log.Printf("can not find video file for subtitle %s, skip it", sub.Filename)
+		}
+	}
+
+	return movies
 }
 
 func isMediaFile(filename string) bool {
+	return checkExtensionMatch(filename, []string{".mkv", ".mp4"})
+}
+
+func isSubtitleFile(filename string) bool {
+	return checkExtensionMatch(filename, []string{".srt", ".ass"})
+}
+
+func checkExtensionMatch(filename string, extList []string) bool {
 	ext := filepath.Ext(filename)
-	return ext == ".mkv" || ext == ".mp4"
+	for _, e := range extList {
+		if ext == e {
+			return true
+		}
+	}
+	return false
 }
 
 func addStream(movieFile *model.MovieFile, stream ffmpegmodel.Streams) {
@@ -115,6 +158,16 @@ func probeMediaFile(filepath string) (*ffmpegmodel.Mediafile, error) {
 	mediaFile := trans.MediaFile()
 
 	return mediaFile, nil
+}
+
+func probeSubtitleFile(path string) (*model.SubtitleFile, error) {
+	subFile := &model.SubtitleFile{}
+	subFile.Dir, subFile.Filename = filepath.Split(path)
+
+	ext := filepath.Ext(subFile.Filename)
+	subFile.Format = ext[1:]
+
+	return subFile, nil
 }
 
 func convertMediaFile(mediaFile *ffmpegmodel.Mediafile, movieFile *model.MovieFile) {

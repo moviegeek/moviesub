@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	mongoDatabaseName        = "moviesub"
-	mongoMovieFileCollection = "moviefiles"
+	mongoDatabaseName    = "moviesub"
+	mongoMovieCollection = "movie"
 )
 
 //Database is the structure holds db connection and query interfaces
@@ -41,7 +41,7 @@ func New(URI string, user, password string) (*Database, error) {
 
 	log.Println("Connected to MongoDB!")
 
-	moviefileCollection := client.Database(mongoDatabaseName).Collection(mongoMovieFileCollection)
+	moviefileCollection := client.Database(mongoDatabaseName).Collection(mongoMovieCollection)
 
 	db := &Database{client, moviefileCollection}
 

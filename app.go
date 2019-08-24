@@ -8,7 +8,6 @@ import (
 	"github.com/moviegeek/moviesub/config"
 	"github.com/moviegeek/moviesub/database"
 	"github.com/moviegeek/moviesub/files"
-	"github.com/moviegeek/moviesub/model"
 	"github.com/moviegeek/moviesub/router"
 )
 
@@ -24,17 +23,13 @@ func main() {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
 
-	movieFiles := []*model.MovieFile{}
+	movies := filescaner.ScanMediaFiles()
 
-	filescaner.ScanMediaFiles(func(m *model.MovieFile) {
-		movieFiles = append(movieFiles, m)
-	})
+	log.Printf("found %d movies", len(movies))
 
-	log.Printf("found %d movies", len(movieFiles))
-
-	for _, m := range movieFiles {
-		log.Printf("Add movie to db: %s", m.Title)
-		err := db.AddMovieFile(m)
+	for _, m := range movies {
+		log.Printf("Add movie to db: %s", m.VideoFiles[0].Title)
+		err := db.AddMovie(m)
 		if err != nil {
 			fmt.Printf("add fail: %+v", err)
 		}
